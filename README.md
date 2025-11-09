@@ -13,5 +13,9 @@ python -m venv venv
 ```bash
 source venv/bin/activate
 ```
+### PostgreSQL 
+``` bash 
+port 5432
+```
 
 
