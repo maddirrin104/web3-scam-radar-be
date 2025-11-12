@@ -20,8 +20,16 @@ pip install -r requirements.txt
 ```
 
 ## PostgreSQL 
-``` bash 
+```bash 
 port 5432
+```
+## Khởi chạy 
+``` bash 
+docker compose up --build 
+```
+## Swagger UI
+```bash
+http://localhost:8000/docs
 ```
 
 
