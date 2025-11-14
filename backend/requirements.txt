@@ -6,3 +6,4 @@ psycopg[binary]==3.2.12
 alembic==1.17.1
 python-slugify==8.0.4
 httpx==0.28.1
+tenacity==9.0.0

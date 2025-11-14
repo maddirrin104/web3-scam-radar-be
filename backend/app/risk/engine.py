@@ -80,3 +80,46 @@ def score_tx(db: Session, chain_id: int, to: str, data: str | None, value) -> di
     level = level_from_score(score)
     labels = (crep.labels if crep else {})
     return {"risk": score, "level": level, "reasons": reasons, "labels": labels}
+
+from app.services.model_client import model_predict
+
+async def score_tx_with_model(db, chain_id, to, data, value, context: dict | None = None):
+    """
+    context có thể chứa:
+    - account_address
+    - transaction_history (list) giống đúng format của team model
+    - explain, explain_with_llm (bool)
+    """
+    # 1) Heuristic sẵn có
+    heur = score_tx(db, chain_id, to, data, value)  # hàm cũ trả {risk, level, reasons, labels}
+    score = heur["risk"]
+    reasons = heur["reasons"]
+
+    # 2) Gọi model nếu có context đầy đủ
+    if context:
+        try:
+            resp = await model_predict(context)
+            m_acc = float(resp.get("account_scam_probability", 0.0)) * 100
+            m_tx  = float(resp.get("transaction_scam_probability", 0.0)) * 100
+            mscore = max(m_acc, m_tx)
+
+            # blend
+            blended = int(0.6 * score + 0.4 * mscore)
+            score = max(score, blended)  # hoặc lấy blended trực tiếp
+            reasons.append("ml_blend")
+
+            # bạn có thể đính kèm SHAP/LLM vào labels để FE hiển thị
+            heur["labels"]["ml_raw"] = {
+                "account_scam_probability": resp.get("account_scam_probability"),
+                "transaction_scam_probability": resp.get("transaction_scam_probability"),
+            }
+            if "llm_explanation" in resp:
+                heur["labels"]["llm_explanation"] = resp["llm_explanation"]
+
+        except Exception as e:
+            reasons.append(f"ml_call_failed:{e}")
+
+    heur["risk"] = score
+    heur["level"] = level_from_score(score)  # dùng helper cũ
+    heur["reasons"] = reasons
+    return heur

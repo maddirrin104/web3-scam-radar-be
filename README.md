@@ -16,7 +16,7 @@ source venv/bin/activate
 
 ## Cài dependencies
 ```bash
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 ## PostgreSQL 
@@ -29,7 +29,7 @@ docker compose up --build
 ```
 ## Swagger UI
 ```bash
-http://localhost:8000/docs
+http://localhost:7000/docs
 ```
 
 
